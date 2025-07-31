@@ -1,0 +1,18 @@
+@startuml
+!define OBJECT(name,type) object name <<type>>
+
+OBJECT(client, "Client")
+OBJECT(server, "Server")
+OBJECT(db, "Database")
+
+client -> server : 1: request()
+server -> db : 2: query()
+db --> server : 3: result
+server --> client : 4: response()
+
+note as hell_note
+end note
+
+server . hell_note
+
+@enduml

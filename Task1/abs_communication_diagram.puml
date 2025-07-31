@@ -1,0 +1,60 @@
+@startuml
+skinparam linestyle ortho
+
+actor "Клиент" as client
+actor "Сотрудник отделения" as front_office_employee
+rectangle "<b>АБС</b>" as abs #pink
+
+' Выдача кредита
+
+client --> front_office_employee : 2: заявка на кредит
+front_office_employee --> abs : 2.1) заводит заявку\n на кредит в АБС
+
+rectangle "Кредитный\nконвейер" as credit_pipeline
+database "Входная БД\nс заявками на кредиты" as credit_pipeline_in_db
+abs --> credit_pipeline_in_db : 2.2) сохранение заявки в промежуточную БД (раз в день)
+credit_pipeline --> credit_pipeline_in_db : 2.2) чтение новых заявок из БД (регулярное)
+
+actor "Сотрудники\nотдела\nкредитования" as credit_dept_employees
+credit_dept_employees <--> credit_pipeline : 2.3: обработка заявки\n на кредит
+
+rectangle "Система\nкредитного\nскоринга" as credit_scoring_system
+credit_pipeline -> credit_scoring_system : 2.4) вызовы через API
+credit_scoring_system ---> abs : 2.5) запрос истории клиента
+
+database "Внутренняя БД\nкредитного скоринга" as credit_scoring_system_internal_db
+credit_scoring_system --> credit_scoring_system_internal_db : 2.7)
+
+credit_pipeline --> abs : 2.8) передача результата\nпо кредитной заявке\n(раз в день)
+
+rectangle "БКИ" as credit_history_bureau
+credit_scoring_system -> credit_history_bureau : 2.6) вызовы через API
+
+credit_dept_employees --> abs : 2.9) подтверждение \nзачисления кредитных\nсредств клиенту
+
+database "БД АБС" as abs_db
+abs -> abs_db
+
+
+' Выдача депозита
+client --> front_office_employee : 1.1) заявка на депозит \n без предварительного звонка
+actor "Сотрудники\nотдела\nдепозитов" as deposit_dept_employees
+front_office_employee ..> deposit_dept_employees : 1.1.1) Передача заявки на депозит по email
+deposit_dept_employees ..> credit_dept_employees: 1.1.2) Запрос дополнительных\nданных по клиенту по email
+credit_dept_employees --> abs : 1.1.3) Расчёт кредитного\nриска по клиенту\nс помощью АБС
+credit_dept_employees ..> deposit_dept_employees : 1.1.4) Отправка данных по клиенту\nв отдел депозитов по email
+deposit_dept_employees ..> front_office_employee : 1.1.5) Передача рассчитанной\nставки по депозитам по email
+
+actor "Сотрудники колл-центра" as call_center_employees
+client -> call_center_employees : 1.2) заявка на депозит\nпо телефону
+
+Rectangle "Система колл-центра" as call_center_system
+call_center_employees --> call_center_system : 1.2.1) Заведение заявки на депозит
+call_center_system --> abs : 1.2.2) Передача заявки на депозит в АБС
+
+deposit_dept_employees --> abs : 1.2.4) Обработка несрочных\nзааявок на депозит из АБС
+
+Rectangle "SMS-шлюз" as sms_gateway
+abs --> sms_gateway: 1.2.5) Передача SMS,\nчто можно прийти в отделение\nподписывать договор на депозит\n<<REST>>
+
+@enduml
