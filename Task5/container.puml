@@ -48,7 +48,7 @@ System_Boundary(backend_systems, "Бэкэнд-системы") {
     credit_service --> credit_service_db
 
     ContainerQueue(kafka_broker, "Kafka-брокер", $tags=third-party)
-    credit_service --> kafka_broker
+    credit_service --> kafka_broker: связь с кредитным корвейером, асинх. обработка заявок
 
     ContainerDb(abs_db, "БД АБС", "Oracle")
 
@@ -70,6 +70,7 @@ System_Boundary(backend_systems, "Бэкэнд-системы") {
 
     Container(credit_pipeline, Кредитный конвейер, "Camunda, Java", $tags="modified-component")
     credit_pipeline <-> credit_service
+    credit_pipeline --> kafka_broker: сообщить об изменениях статуса заявок
 
     Container(online_scoring_service, "Онлайн-скоринг", "Python, flask", $tags="modified-component")
     online_scoring_service --> analytical_database

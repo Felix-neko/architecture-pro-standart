@@ -16,13 +16,13 @@ AddElementTag("new-component", $bgColor="#e75480", $borderColor="#AA336A", $font
 ' Пользователи
 Person(guest, "Гость на сайте", Не имеет доступа к интернет-банку)
 Person(client, "Действующий клиент", "Есть доступ к интернет-банку")
-Person(call_center_employee, "Операторы колл-центра")
+Person(call_center_employee, "Операторы колл-центра \n+\nсотрудники отделений")
 
 
 System(credit_system, "Кредитная система", $tags="new-component")
 guest --> credit_system: Смотрит стандартные условия кредитов,\nоставляет заявку на кредит.
 client --> credit_system: Смотрит персональные условия кредитов + предодобренные кредиты,\nсоздает заявку на кредит в интернет-банке.
-call_center_employee --> credit_system: Поиск персональных предложений по кредитам для звонящего клиента
+call_center_employee --> credit_system: Поиск персональных предложений по кредитам для клиента
 
 System(abs, "АБС")
 credit_system .. abs: Экспорт информации о кредитах из АБС\n(с ограничениями по нагрузке на АБС!)
