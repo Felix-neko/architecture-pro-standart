@@ -25,7 +25,7 @@ AddElementTag("new-component", $bgColor="#e75480", $borderColor="#AA336A", $font
 AddElementTag("modified-component", $bgColor="LightGreen", $borderColor="DarkGreen", $fontColor="black", $legendText="Доработанные компоненты")
 
 
-title Система заявок на депозиты: диаграмма контейнеров
+title Система депозитов: диаграмма контейнеров
 
 Person(user, "Пользователь")
 

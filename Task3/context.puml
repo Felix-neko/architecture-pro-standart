@@ -4,7 +4,7 @@
 !pragma layout smetana true
 top to bottom direction
 
-title Система заявок на депозиты: диаграмма контекстов
+title Система депозитов: диаграмма контекстов
 
 AddElementTag("new-component", $bgColor="#e75480", $borderColor="#AA336A", $fontColor="white", $legendText="Новые компоненты")
 
