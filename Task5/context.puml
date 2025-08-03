@@ -4,60 +4,52 @@
 !pragma layout smetana true
 'top to bottom direction
 
+
 'LAYOUT_TOP_DOWN()
 'LAYOUT_AS_SKETCH()
 LAYOUT_WITH_LEGEND()
 
+
+AddElementTag("new-component", $bgColor="#e75480", $borderColor="#AA336A", $fontColor="white", $legendText="Новые компоненты")
+
+
 ' Пользователи
-Person(guest, "Гость на сайте", "Не имеет доступа к интернет-банку")
+Person(guest, "Гость на сайте", Не имеет доступа к интернет-банку)
 Person(client, "Действующий клиент", "Есть доступ к интернет-банку")
+Person(call_center_employee, "Операторы колл-центра")
 
 
-rectangle "Банковские системы и сотрудники" as bank_systems {
-  ' Сотрудники банка
-  Person(back_office_employee, "Сотрудники\nбэк-офиса")
-'  Person(call_center_employee, "Сотрудники колл-центра")
+System(credit_system, "Кредитная система", $tags="new-component")
+guest --> credit_system: Смотрит стандартные условия кредитов,\nоставляет заявку на кредит.
+client --> credit_system: Смотрит персональные условия кредитов + предодобренные кредиты,\nсоздает заявку на кредит в интернет-банке.
+call_center_employee --> credit_system: Поиск персональных предложений по кредитам для звонящего клиента
 
-  ' Основные системы
+System(abs, "АБС")
+credit_system .. abs: Экспорт информации о кредитах из АБС\n(с ограничениями по нагрузке на АБС!)
 
-  System(web_site, "Сайт")
-  guest -> web_site: Смотрит предложения по кредитам, заполняет кредитную анкету
+System(call_center_system, "Система\nколл-центра")
+credit_system --> call_center_system: Заказать обратный звонок в колл-центре
 
-  System(internet_bank_system, "Интернет-банк")
-  client --> internet_bank_system: Смотрит персональные предложения по кредитам, оформляет заявку на кредит
+System(credit_pipeline_system, "Кредитный конвейер")
+credit_system --> credit_pipeline_system: Передать заявку на кредит в кредитный конвейер
 
-  System(credit_service, Кредитный сервис)
-  web_site -> credit_service
+System(online_scoring_system, "Кредитный онлайн-скоринг")
+credit_system --> online_scoring_system: запросить онлайн-скоринг по заявке с сайта
+online_scoring_system .. abs: экспорт данных из АБС для скоринговой аналитики\n(с ограничениями по нагрузке на АБС!)
 
-  System(abs, "АБС")
-  internet_bank_system --> abs: Передача заявки на депозит в АБС
+credit_pipeline_system ---> abs
+call_center_system --> abs
 
-  credit_service <- internet_bank_system
+note as credit_system_note
+В кредитную систему входит не только микросервис работы с кредитами, но и:
 
-  System(call_center_system, "Система колл-центра")
-  web_site ---> call_center_system
-'  call_center_system --> call_center_employee
-  credit_service --> call_center_system: заказывает звонок при одобрении кредита
+- процессы репликации данных из АБС в аналитическую БД и БД с информацией о кредитах;
+- процесс массового скоринга клиентов и генерации персональных предложений по кредитам (по расписанию);
+- дополнительные БД и kafka-брокер.
 
-'  call_center_employee --> guest: Телефонная консультация по открытию депозита
-'  call_center_employee --> web_site: Смотрит актуальные условия по депозитам на спецстранице
+Подробнее -- см. диаграмму контейнеров
+end note
 
-
-'  call_center_employee --> abs: Передача предварительной заявки на депозит в АБС
-
-  call_center_system -> abs: Перенос заявки в АБС из системы колл-центра
-  back_office_employee <-> abs: Обрабатывают заявки на депозиты
-
-  System(credit_pipeline, "Автоматизированный кредитный конвейер")
-  credit_service --> credit_pipeline: Передача заявки на кредит в кредитный конвейер
-  credit_pipeline <- back_office_employee
-}
-Lay_D(client, bank_systems)
-Lay_R(guest, client)
-Lay_R(web_site, internet_bank_system)
-Lay_D(guest, web_site)
-Lay_D(client, web_site)
-
-
+credit_system_note .. credit_system
 
 @enduml

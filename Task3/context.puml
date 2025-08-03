@@ -2,51 +2,48 @@
 '!include ../../../../C4-PlantUML/C4_Context.puml
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
 !pragma layout smetana true
-'top to bottom direction
+top to bottom direction
 
-'LAYOUT_TOP_DOWN()
+title Система заявок на депозиты: диаграмма контекстов
+
+AddElementTag("new-component", $bgColor="#e75480", $borderColor="#AA336A", $fontColor="white", $legendText="Новые компоненты")
+
+LAYOUT_TOP_DOWN()
 'LAYOUT_AS_SKETCH()
 LAYOUT_WITH_LEGEND()
 
 ' Пользователи
-Person(guest, "Гость на сайте", "Не имеет доступа к интернет-банку")
-Person(client, "Действующий клиент", "Есть доступ к интернет-банку")
+Person(guest, "Гость на сайте")
+Person(client, "Клиент интернет-банка")
 
+' Основные системы
 
-rectangle "Банковские системы и сотрудники" as bank_systems {
-  ' Сотрудники банка
-  Person(back_office_employee, "Сотрудники\nбэк-офиса")
-  Person(call_center_employee, "Сотрудники колл-центра")
+System(deposit_system, "Система депозитов", $tags="new-component")
+guest --> deposit_system: Посмотреть стандартные условия депозитов,\nоставить заявку на обратный звонок
+client --> deposit_system: Посмотреть персональные условия депозитов, создать заявку на депозит
 
-  ' Основные системы
+System(abs, "АБС")
+deposit_system ..> abs: Передать заявку в АБС\n(с ограничениями по нагрузке на АБС!)
 
-  System(web_site, "Сайт")
-  guest -> web_site: Смотрит стандартные условия депозитов, заявка на обратный звонок
+System(call_center_system, "Система колл-центра")
+deposit_system --> call_center_system: Передать в колл-центр заявку на обратный звонок
+call_center_system -> abs: Перенос заявки в АБС из системы колл-центра
 
-  System(internet_bank_system, "Интернет-банк")
-  client --> internet_bank_system: Смотрит персональные условия депозитов, заявка на заведение депозита
+note as deposit_system_note
+  Система работы с депозитами включает не только микросервис работы с депозитами,
+  но и дополнительные процессы-по-расписанию, вспомогательные БД и проч: см. диаграмму контекстов.
+end note
 
-  System(abs, "АБС")
-  internet_bank_system --> abs: Передача заявки на депозит в АБС
+note as global_note
+  На схеме не показаны:
+  - работа бэк-офиса с АБС
+  - сотрудники бэк-офиса и колл-центра;
+  Они работают по старым процессам, загромождать ими схему я не стал.
 
-  System(call_center_system, "Система колл-центра")
-  web_site ---> call_center_system
-  call_center_system --> call_center_employee
-  call_center_employee --> guest: Телефонная консультация по открытию депозита
-  call_center_employee --> web_site: Смотрит актуальные условия по депозитам на спецстранице
+  Интернет-банк и сайт как отдельные сущности я тоже не показывал.
+end note
 
-  call_center_employee --> abs: Передача предварительной заявки на депозит в АБС
-
-  call_center_system -> abs: Перенос заявки в АБС из системы колл-центра
-  back_office_employee <-> abs: Обрабатывают заявки на депозиты
-
-}
-Lay_D(client, bank_systems)
-Lay_R(guest, client)
-Lay_R(web_site, internet_bank_system)
-Lay_D(guest, web_site)
-Lay_D(client, web_site)
-
+deposit_system_note .. deposit_system
 
 
 @enduml
