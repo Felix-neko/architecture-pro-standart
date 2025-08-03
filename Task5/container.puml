@@ -1,0 +1,104 @@
+@startuml
+
+!pragma layout smetana true
+top to bottom direction
+
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+'!include ../../../C4-PlantUML/C4_Container.puml
+
+!define DEVICONS https://raw.githubusercontent.com/tupadr3/plantuml-icon-font-sprites/master/devicons
+!define FONTAWESOME https://raw.githubusercontent.com/tupadr3/plantuml-icon-font-sprites/master/font-awesome-5
+!include DEVICONS/python.puml
+!include DEVICONS/postgresql.puml
+!include DEVICONS/react.puml
+!include FONTAWESOME/users.puml
+!include FONTAWESOME/mobile_alt.puml
+!include DEVICONS/redis.puml
+!include FONTAWESOME/exchange_alt.puml
+!include FONTAWESOME/database.puml
+
+skinparam noteTextAlignment left
+
+AddElementTag("third-party", $bgColor="#f5f5f5", $borderColor="DarkGray", $fontColor="Black", $legendText="Компоненты сторонних производителей")
+AddElementTag("new-component", $bgColor="#e75480", $borderColor="#AA336A", $fontColor="white", $legendText="Новые компоненты")
+AddElementTag("modified-component", $bgColor="LightGreen", $borderColor="DarkGreen", $fontColor="black", $legendText="Доработанные компоненты")
+
+
+title Система заявок на кредиты: диаграмма контейнеров
+
+Person(user, "Пользователь")
+
+System_Boundary(frontend_systems, "Фронтэнд-системы") {
+    Container(site_frontend, "Фронтэнд сайта", "JavaScript, React", $sprite="react", $tags="modified-component")
+    Container(internet_bank_frontend, "Фронтэнд интернет-банка", "React Native", $sprite="mobile_alt", $tags="modified-component")
+}
+
+user --> site_frontend
+user --> internet_bank_frontend
+
+System_Boundary(backend_systems, "Бэкэнд-системы") {
+  System_Boundary(inhouse_backend_systems, "Бэкэнд-системы внутри банка") {
+    Container(old_site_backend, "Бэкэнд сайта", "PHP + неизвестная CMS")
+    site_frontend --> old_site_backend: REST, HTTPS
+
+    Container(credit_service, "Кредитный сервис", "Java/Kotlin, Spring Boot", $tags="new-component")
+    ContainerDb(credit_service_db, "БД депозитов", "PostgreSQL", $tags="third-party")
+    site_frontend --> credit_service: REST, HTTPS
+    internet_bank_frontend --> credit_service: REST, HTTPS
+    credit_service --> credit_service_db
+
+    ContainerQueue(kafka_broker, "Kafka-брокер", $tags=third-party)
+    credit_service --> kafka_broker
+
+    ContainerDb(abs_db, "БД АБС", "Oracle")
+
+    ContainerDb(analytical_database, "Аналитическая БД", "PostgreSQL", $tags="third-party")
+    ContainerDb(credit_database, БД кредитов и платежей, "Oracle", $tags="third-party")
+    credit_service --> credit_database
+
+    System_Boundary(scheduled_airflow_processes, "Airflow-процессы по расписанию") {
+      Container(deposit_scoring_process, "Массовый кредитный скоринг", "Python", "офлайн-процесс, раз в сутки",  $tags="new-component")
+      Container(incremental_abs_db_copying, "Копирование данных из АБС в аналит. БД", "Python", раз в сутки, $tags="modified-component")
+      Container(incremental_abs_db_credit_copying, Копирование данных по кредитам, "Python", раз в час, $tags="new-component")
+    }
+    incremental_abs_db_copying --> abs_db
+    incremental_abs_db_credit_copying --> abs_db
+    incremental_abs_db_copying --> analytical_database
+    deposit_scoring_process --> analytical_database
+    deposit_scoring_process --> credit_service: обновление персональных предложений по кредитам
+    incremental_abs_db_credit_copying --> credit_database
+
+    Container(credit_pipeline, Кредитный конвейер, "Camunda, Java", $tags="modified-component")
+    credit_pipeline <-> credit_service
+
+    Container(online_scoring_service, "Онлайн-скоринг", "Python, flask", $tags="modified-component")
+    online_scoring_service --> analytical_database
+    credit_pipeline --> online_scoring_service
+  }
+
+  System_Boundary(contractor_backend_systems, "Бэкэнд-системы у подрядчиков") {
+
+    Container(old_internet_bank_backend, "Бэкэнд интернет-банка", "ASP.NET 4.5")
+    internet_bank_frontend --> old_internet_bank_backend: REST, HTTPS
+    Container(call_center_system, Система колл-центра, "Java Spring Boot", $tags="modified-component")
+    credit_service --> call_center_system: REST, HTTP
+  }
+
+'  Lay_D(inhouse_backend_systems, contractor_backend_systems)
+
+  Container_Ext(sms_gateway, "SMS-шлюз")
+  credit_service --> sms_gateway: REST, HTTP
+
+
+  old_internet_bank_backend -> abs_db: прямая интеграция с БД АБС для проведения платежей и открытия счетов
+
+
+
+}
+
+Container_Ext(partner_call_center_system, "Система колл-центра партнера")
+credit_service --> partner_call_center_system: REST, HTTP
+
+SHOW_LEGEND()
+
+@enduml

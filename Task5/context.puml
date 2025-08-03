@@ -1,0 +1,63 @@
+@startuml
+'!include ../../../../C4-PlantUML/C4_Context.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+!pragma layout smetana true
+'top to bottom direction
+
+'LAYOUT_TOP_DOWN()
+'LAYOUT_AS_SKETCH()
+LAYOUT_WITH_LEGEND()
+
+' Пользователи
+Person(guest, "Гость на сайте", "Не имеет доступа к интернет-банку")
+Person(client, "Действующий клиент", "Есть доступ к интернет-банку")
+
+
+rectangle "Банковские системы и сотрудники" as bank_systems {
+  ' Сотрудники банка
+  Person(back_office_employee, "Сотрудники\nбэк-офиса")
+'  Person(call_center_employee, "Сотрудники колл-центра")
+
+  ' Основные системы
+
+  System(web_site, "Сайт")
+  guest -> web_site: Смотрит предложения по кредитам, заполняет кредитную анкету
+
+  System(internet_bank_system, "Интернет-банк")
+  client --> internet_bank_system: Смотрит персональные предложения по кредитам, оформляет заявку на кредит
+
+  System(credit_service, Кредитный сервис)
+  web_site -> credit_service
+
+  System(abs, "АБС")
+  internet_bank_system --> abs: Передача заявки на депозит в АБС
+
+  credit_service <- internet_bank_system
+
+  System(call_center_system, "Система колл-центра")
+  web_site ---> call_center_system
+'  call_center_system --> call_center_employee
+  credit_service --> call_center_system: заказывает звонок при одобрении кредита
+
+'  call_center_employee --> guest: Телефонная консультация по открытию депозита
+'  call_center_employee --> web_site: Смотрит актуальные условия по депозитам на спецстранице
+
+
+'  call_center_employee --> abs: Передача предварительной заявки на депозит в АБС
+
+  call_center_system -> abs: Перенос заявки в АБС из системы колл-центра
+  back_office_employee <-> abs: Обрабатывают заявки на депозиты
+
+  System(credit_pipeline, "Автоматизированный кредитный конвейер")
+  credit_service --> credit_pipeline: Передача заявки на кредит в кредитный конвейер
+  credit_pipeline <- back_office_employee
+}
+Lay_D(client, bank_systems)
+Lay_R(guest, client)
+Lay_R(web_site, internet_bank_system)
+Lay_D(guest, web_site)
+Lay_D(client, web_site)
+
+
+
+@enduml
