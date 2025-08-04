@@ -1,0 +1,49 @@
+@startuml
+'!include ../../../../C4-PlantUML/C4_Context.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+!pragma layout smetana true
+top to bottom direction
+
+title Система депозитов: диаграмма контекстов
+
+AddElementTag("new-component", $bgColor="#e75480", $borderColor="#AA336A", $fontColor="white", $legendText="Новые компоненты")
+
+LAYOUT_TOP_DOWN()
+'LAYOUT_AS_SKETCH()
+LAYOUT_WITH_LEGEND()
+
+' Пользователи
+Person(guest, "Гость на сайте")
+Person(client, "Клиент интернет-банка")
+
+' Основные системы
+
+System(deposit_system, "Система депозитов", $tags="new-component")
+guest --> deposit_system: Посмотреть стандартные условия депозитов,\nоставить заявку на обратный звонок
+client --> deposit_system: Посмотреть персональные условия депозитов, создать заявку на депозит
+
+System(abs, "АБС")
+deposit_system ..> abs: Передать заявку в АБС\n(с ограничениями по нагрузке на АБС!)
+
+System(call_center_system, "Система колл-центра")
+deposit_system --> call_center_system: Передать в колл-центр заявку на обратный звонок
+call_center_system -> abs: Перенос заявки в АБС из системы колл-центра
+
+note as deposit_system_note
+  Система работы с депозитами включает не только микросервис работы с депозитами,
+  но и дополнительные процессы-по-расписанию, вспомогательные БД и проч: см. диаграмму контекстов.
+end note
+
+note as global_note
+  На схеме не показаны:
+  - работа бэк-офиса с АБС
+  - сотрудники бэк-офиса и колл-центра;
+  Они работают по старым процессам, загромождать ими схему я не стал.
+
+  Интернет-банк и сайт как отдельные сущности я тоже не показывал.
+end note
+
+deposit_system_note .. deposit_system
+
+
+@enduml

@@ -1,0 +1,55 @@
+@startuml
+'!include ../../../../C4-PlantUML/C4_Context.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+!pragma layout smetana true
+'top to bottom direction
+
+
+'LAYOUT_TOP_DOWN()
+'LAYOUT_AS_SKETCH()
+LAYOUT_WITH_LEGEND()
+
+
+AddElementTag("new-component", $bgColor="#e75480", $borderColor="#AA336A", $fontColor="white", $legendText="Новые компоненты")
+
+
+' Пользователи
+Person(guest, "Гость на сайте", Не имеет доступа к интернет-банку)
+Person(client, "Действующий клиент", "Есть доступ к интернет-банку")
+Person(call_center_employee, "Операторы колл-центра \n+\nсотрудники отделений")
+
+
+System(credit_system, "Кредитная система", $tags="new-component")
+guest --> credit_system: Смотрит стандартные условия кредитов,\nоставляет заявку на кредит.
+client --> credit_system: Смотрит персональные условия кредитов + предодобренные кредиты,\nсоздает заявку на кредит в интернет-банке.
+call_center_employee --> credit_system: Поиск персональных предложений по кредитам для клиента
+
+System(abs, "АБС")
+credit_system .. abs: Экспорт информации о кредитах из АБС\n(с ограничениями по нагрузке на АБС!)
+
+System(call_center_system, "Система\nколл-центра")
+credit_system --> call_center_system: Заказать обратный звонок в колл-центре
+
+System(credit_pipeline_system, "Кредитный конвейер")
+credit_system --> credit_pipeline_system: Передать заявку на кредит в кредитный конвейер
+
+System(online_scoring_system, "Кредитный онлайн-скоринг")
+credit_system --> online_scoring_system: запросить онлайн-скоринг по заявке с сайта
+online_scoring_system .. abs: экспорт данных из АБС для скоринговой аналитики\n(с ограничениями по нагрузке на АБС!)
+
+credit_pipeline_system ---> abs
+call_center_system --> abs
+
+note as credit_system_note
+В кредитную систему входит не только микросервис работы с кредитами, но и:
+
+- процессы репликации данных из АБС в аналитическую БД и БД с информацией о кредитах;
+- процесс массового скоринга клиентов и генерации персональных предложений по кредитам (по расписанию);
+- дополнительные БД и kafka-брокер.
+
+Подробнее -- см. диаграмму контейнеров
+end note
+
+credit_system_note .. credit_system
+
+@enduml

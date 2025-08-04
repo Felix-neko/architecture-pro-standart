@@ -1,0 +1,42 @@
+@startgantt
+title Banking System Development Roadmap
+
+' Define project start date
+Project starts 2024-01-01
+
+' Team 1: Backend Development Team
+[Backend Team] as [BACKEND] lasts 15 days
+[Database Setup] as [DB] lasts 10 days
+[API Development] as [API] lasts 20 days
+[Integration Testing] as [INT_TEST] lasts 8 days
+
+[DB] starts at [BACKEND]'s start
+[API] starts at [DB]'s end
+[INT_TEST] starts at [API]'s end
+
+' Team 2: Frontend Development Team
+[Frontend Team] as [FRONTEND] lasts 12 days
+[UI Design] as [UI] lasts 15 days
+[Component Development] as [COMP] lasts 18 days
+[User Testing] as [USER_TEST] lasts 5 days
+
+[UI] starts at [FRONTEND]'s start
+[COMP] starts at [UI]'s end
+[USER_TEST] starts at [COMP]'s end
+
+' Team 3: DevOps Team
+[DevOps Team] as [DEVOPS] lasts 8 days
+[Infrastructure Setup] as [INFRA] lasts 12 days
+[CI/CD Pipeline] as [CICD] lasts 10 days
+[Production Deployment] as [DEPLOY] lasts 6 days
+
+[INFRA] starts at [DEVOPS]'s start
+[CICD] starts at [INFRA]'s end
+[DEPLOY] starts at [CICD]'s end
+
+' Dependencies between teams
+[COMP] starts at [API]'s start
+[DEPLOY] starts at [INT_TEST]'s end
+[DEPLOY] starts at [USER_TEST]'s end
+
+@endgantt
